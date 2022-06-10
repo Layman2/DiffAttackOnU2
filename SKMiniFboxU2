@@ -1,0 +1,344 @@
+# -*- coding: UTF-8 -*-
+
+#        0, 1, 2, 3,  4, 5, 6,  7,  8,  9, a,  b, c, d, e, f
+sbox = [12, 5, 6, 11, 9, 0, 10, 13, 3, 14, 15, 8, 4, 7, 1, 2]   # 4-bit S-box
+
+def DefineRoundVariables(file,Round):
+    fileobj=open(file,"a")
+    buf=''
+    buf += "Sbox: ARRAY BITVECTOR(4) OF BITVECTOR(4) ;\n"
+    for r in range(Round):
+        buf += "x3_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "x2_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "x1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "x0_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "LFflag_%d: BITVECTOR(12) ;\n" %(r)
+        buf += "RFflag_%d: BITVECTOR(12) ;\n" %(r)
+        buf += "\n"
+        # ***********the 16-bit F-box in the left branch***************
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Ls0_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i) 
+            buf += "Ls0_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Ls1_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Ls1_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Lp1_value1_%d: BITVECTOR(16) ;\n"  %(r)
+        buf += "Lp1_value2_%d: BITVECTOR(16) ;\n"  %(r)
+        buf += "\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Ls2_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Ls2_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Lp2_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Lp2_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf +="\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Ls3_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Ls3_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Lp3_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Lp3_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf +="\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Ls4_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Ls4_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Lp4_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Lp4_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Lp4_diff_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "\n\n"
+        # ***********the 16-bit F-box in the right branch***************
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Rs0_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs0_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs1_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs1_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Rp1_value1_%d: BITVECTOR(16) ;\n"  %(r)
+        buf += "Rp1_value2_%d: BITVECTOR(16) ;\n"  %(r)
+        buf += "\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Rs2_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs2_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Rp2_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Rp2_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf +="\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Rs3_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs3_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Rp3_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Rp3_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf +="\n"
+        # the s-box and 16-bit permutation.
+        for i in range(4):
+            buf += "Rs4_value1_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+            buf += "Rs4_value2_%d_%d: BITVECTOR(4) ;\n" %(r,i)
+        buf += "Rp4_value1_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Rp4_value2_%d: BITVECTOR(16) ;\n" %(r)
+        buf += "Rp4_diff_%d: BITVECTOR(16) ;\n" %(r)        
+        buf += "\n\n"
+    buf += "x3_%d: BITVECTOR(16) ;\n" %(Round)
+    buf += "x2_%d: BITVECTOR(16) ;\n" %(Round)
+    buf += "x1_%d: BITVECTOR(16) ;\n" %(Round)
+    buf += "x0_%d: BITVECTOR(16) ;\n" %(Round)    
+    buf += "total_Fflag: BITVECTOR(12) ;\n\n"
+    fileobj.write(buf)
+    fileobj.close()
+
+
+def ConstraintByMiniF(file,Round,Bound):
+    fin=open(file,"a")
+    buf=""
+    for i in range(16):
+        buf += "ASSERT( Sbox[0hex%x]=0hex%x ) ;\n" %(i,sbox[i])
+    for r in range(Round):
+        buf += "ASSERT( x3_%d = BVXOR(Lp4_diff_%d,x2_%d) ) ;\n" %(r+1,r,r)
+        buf += "ASSERT( x2_%d = x1_%d ) ;\n" %(r+1,r)
+        buf += "ASSERT( x1_%d = BVXOR(Rp4_diff_%d,x0_%d) ) ;\n" %(r+1,r,r)
+        buf += "ASSERT( x0_%d = x3_%d ) ;\n" %(r+1,r)
+        # # ***********the activeness of the F-box***************
+        buf += "ASSERT( IF (x3_%d=0hex0000 AND Lp4_diff_%d=0hex0000) THEN LFflag_%d=0hex000 ELSE LFflag_%d=0hex001 ENDIF ) ;\n" %(r,r,r,r)
+        buf += "ASSERT( IF (x1_%d=0hex0000 AND Rp4_diff_%d=0hex0000) THEN RFflag_%d=0hex000 ELSE RFflag_%d=0hex001 ENDIF ) ;\n" %(r,r,r,r)
+        # ***********the 16-bit F-box in the left branch***************
+        buf += "ASSERT( x3_%d = BVXOR( Ls0_value1_%d_3@Ls0_value1_%d_2@Ls0_value1_%d_1@Ls0_value1_%d_0, Ls0_value2_%d_3@Ls0_value2_%d_2@Ls0_value2_%d_1@Ls0_value2_%d_0) ) ;\n" %(r, r,r,r,r, r,r,r,r)
+        buf += "ASSERT( Lp4_diff_%d= BVXOR( Lp4_value1_%d, Lp4_value2_%d) ) ;\n"  %(r,r,r)
+        # the S-box and 32-bit permutation of F-box 
+        buf += "ASSERT( Ls1_value1_%d_3=Sbox[BVXOR(Ls0_value1_%d_3,0hex1)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls1_value2_%d_3=Sbox[BVXOR(Ls0_value2_%d_3,0hex1)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls1_value1_%d_2=Sbox[Ls0_value1_%d_2] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls1_value2_%d_2=Sbox[Ls0_value2_%d_2] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Ls1_value1_%d_1 = Sbox[Ls0_value1_%d_1] ) ;\n" %(r, r)
+            buf += "ASSERT( Ls1_value2_%d_1 = Sbox[Ls0_value2_%d_1] ) ;\n" %(r, r)
+            buf += "ASSERT( Ls1_value1_%d_0 = Sbox[BVXOR(Ls0_value1_%d_0,0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls1_value2_%d_0 = Sbox[BVXOR(Ls0_value2_%d_0,0hex%x)] ) ;\n" %(r,r,2*r)
+        if r>=8:   
+            buf += "ASSERT( Ls1_value1_%d_1 = Sbox[BVXOR(Ls0_value1_%d_1,0hex%x)] ) ;\n" %(r,r,2*r-15)
+            buf += "ASSERT( Ls1_value2_%d_1 = Sbox[BVXOR(Ls0_value2_%d_1,0hex%x)] ) ;\n" %(r,r,2*r-15)            
+            buf += "ASSERT( Ls1_value1_%d_0 = Sbox[BVXOR(Ls0_value1_%d_0,0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls1_value2_%d_0 = Sbox[BVXOR(Ls0_value2_%d_0,0hexf)] ) ;\n" %(r,r)
+
+        # 16-bit permutation
+        buf += "ASSERT( Lp1_value1_%d[15:12] = Ls1_value1_%d_0[3:3]@Ls1_value1_%d_1[2:2]@Ls1_value1_%d_2[1:1]@Ls1_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value1_%d[11:8]  = Ls1_value1_%d_1[3:3]@Ls1_value1_%d_2[2:2]@Ls1_value1_%d_3[1:1]@Ls1_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value1_%d[7:4]   = Ls1_value1_%d_2[3:3]@Ls1_value1_%d_3[2:2]@Ls1_value1_%d_0[1:1]@Ls1_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value1_%d[3:0]   = Ls1_value1_%d_3[3:3]@Ls1_value1_%d_0[2:2]@Ls1_value1_%d_1[1:1]@Ls1_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Lp1_value2_%d[15:12] = Ls1_value2_%d_0[3:3]@Ls1_value2_%d_1[2:2]@Ls1_value2_%d_2[1:1]@Ls1_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value2_%d[11:8]  = Ls1_value2_%d_1[3:3]@Ls1_value2_%d_2[2:2]@Ls1_value2_%d_3[1:1]@Ls1_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value2_%d[7:4]   = Ls1_value2_%d_2[3:3]@Ls1_value2_%d_3[2:2]@Ls1_value2_%d_0[1:1]@Ls1_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp1_value2_%d[3:0]   = Ls1_value2_%d_3[3:3]@Ls1_value2_%d_0[2:2]@Ls1_value2_%d_1[1:1]@Ls1_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and 32-bit permutation of F-box 
+        buf += "ASSERT( Ls2_value1_%d_3=Sbox[BVXOR(Lp1_value1_%d[15:12],0hex2)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls2_value2_%d_3=Sbox[BVXOR(Lp1_value2_%d[15:12],0hex2)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls2_value1_%d_2=Sbox[Lp1_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls2_value2_%d_2=Sbox[Lp1_value2_%d[11:8]] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Ls2_value1_%d_0 = Sbox[BVXOR(Lp1_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls2_value2_%d_0 = Sbox[BVXOR(Lp1_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls2_value1_%d_1 = Sbox[Lp1_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Ls2_value2_%d_1 = Sbox[Lp1_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:
+            buf += "ASSERT( Ls2_value1_%d_0 = Sbox[BVXOR(Lp1_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls2_value2_%d_0 = Sbox[BVXOR(Lp1_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls2_value1_%d_1 = Sbox[BVXOR(Lp1_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+            buf += "ASSERT( Ls2_value2_%d_1 = Sbox[BVXOR(Lp1_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+        # 16-bit permutation
+        buf += "ASSERT( Lp2_value1_%d[15:12] = Ls2_value1_%d_0[3:3]@Ls2_value1_%d_1[2:2]@Ls2_value1_%d_2[1:1]@Ls2_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value1_%d[11:8]  = Ls2_value1_%d_1[3:3]@Ls2_value1_%d_2[2:2]@Ls2_value1_%d_3[1:1]@Ls2_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value1_%d[7:4]   = Ls2_value1_%d_2[3:3]@Ls2_value1_%d_3[2:2]@Ls2_value1_%d_0[1:1]@Ls2_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value1_%d[3:0]   = Ls2_value1_%d_3[3:3]@Ls2_value1_%d_0[2:2]@Ls2_value1_%d_1[1:1]@Ls2_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Lp2_value2_%d[15:12] = Ls2_value2_%d_0[3:3]@Ls2_value2_%d_1[2:2]@Ls2_value2_%d_2[1:1]@Ls2_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value2_%d[11:8]  = Ls2_value2_%d_1[3:3]@Ls2_value2_%d_2[2:2]@Ls2_value2_%d_3[1:1]@Ls2_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value2_%d[7:4]   = Ls2_value2_%d_2[3:3]@Ls2_value2_%d_3[2:2]@Ls2_value2_%d_0[1:1]@Ls2_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp2_value2_%d[3:0]   = Ls2_value2_%d_3[3:3]@Ls2_value2_%d_0[2:2]@Ls2_value2_%d_1[1:1]@Ls2_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and 32-bit permutation of F-box 
+        buf += "ASSERT( Ls3_value1_%d_3=Sbox[BVXOR(Lp2_value1_%d[15:12],0hex3)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls3_value2_%d_3=Sbox[BVXOR(Lp2_value2_%d[15:12],0hex3)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls3_value1_%d_2=Sbox[Lp2_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls3_value2_%d_2=Sbox[Lp2_value2_%d[11:8]] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Ls3_value1_%d_0 = Sbox[BVXOR(Lp2_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls3_value2_%d_0 = Sbox[BVXOR(Lp2_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls3_value1_%d_1 = Sbox[Lp2_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Ls3_value2_%d_1 = Sbox[Lp2_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:        
+            buf += "ASSERT( Ls3_value1_%d_0 = Sbox[BVXOR(Lp2_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls3_value2_%d_0 = Sbox[BVXOR(Lp2_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls3_value1_%d_1 = Sbox[BVXOR(Lp2_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+            buf += "ASSERT( Ls3_value2_%d_1 = Sbox[BVXOR(Lp2_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+        # 16-bit permutation
+        buf += "ASSERT( Lp3_value1_%d[15:12] = Ls3_value1_%d_0[3:3]@Ls3_value1_%d_1[2:2]@Ls3_value1_%d_2[1:1]@Ls3_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value1_%d[11:8]  = Ls3_value1_%d_1[3:3]@Ls3_value1_%d_2[2:2]@Ls3_value1_%d_3[1:1]@Ls3_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value1_%d[7:4]   = Ls3_value1_%d_2[3:3]@Ls3_value1_%d_3[2:2]@Ls3_value1_%d_0[1:1]@Ls3_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value1_%d[3:0]   = Ls3_value1_%d_3[3:3]@Ls3_value1_%d_0[2:2]@Ls3_value1_%d_1[1:1]@Ls3_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Lp3_value2_%d[15:12] = Ls3_value2_%d_0[3:3]@Ls3_value2_%d_1[2:2]@Ls3_value2_%d_2[1:1]@Ls3_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value2_%d[11:8]  = Ls3_value2_%d_1[3:3]@Ls3_value2_%d_2[2:2]@Ls3_value2_%d_3[1:1]@Ls3_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value2_%d[7:4]   = Ls3_value2_%d_2[3:3]@Ls3_value2_%d_3[2:2]@Ls3_value2_%d_0[1:1]@Ls3_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp3_value2_%d[3:0]   = Ls3_value2_%d_3[3:3]@Ls3_value2_%d_0[2:2]@Ls3_value2_%d_1[1:1]@Ls3_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and 32-bit permutation of F-box 
+        buf += "ASSERT( Ls4_value1_%d_3=Sbox[BVXOR(Lp3_value1_%d[15:12],0hex4)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls4_value2_%d_3=Sbox[BVXOR(Lp3_value2_%d[15:12],0hex4)] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls4_value1_%d_2=Sbox[Lp3_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Ls4_value2_%d_2=Sbox[Lp3_value2_%d[11:8]] ) ;\n" %(r, r)
+        if r<8:
+            buf += "ASSERT( Ls4_value1_%d_0 = Sbox[BVXOR(Lp3_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls4_value2_%d_0 = Sbox[BVXOR(Lp3_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r)
+            buf += "ASSERT( Ls4_value1_%d_1=Sbox[Lp3_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Ls4_value2_%d_1=Sbox[Lp3_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:        
+            buf += "ASSERT( Ls4_value1_%d_0 = Sbox[BVXOR(Lp3_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls4_value2_%d_0 = Sbox[BVXOR(Lp3_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Ls4_value1_%d_1 = Sbox[BVXOR(Lp3_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+            buf += "ASSERT( Ls4_value2_%d_1 = Sbox[BVXOR(Lp3_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r-15)
+        # 16-bit permutation
+        buf += "ASSERT( Lp4_value1_%d[15:12] = Ls4_value1_%d_0[3:3]@Ls4_value1_%d_1[2:2]@Ls4_value1_%d_2[1:1]@Ls4_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value1_%d[11:8]  = Ls4_value1_%d_1[3:3]@Ls4_value1_%d_2[2:2]@Ls4_value1_%d_3[1:1]@Ls4_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value1_%d[7:4]   = Ls4_value1_%d_2[3:3]@Ls4_value1_%d_3[2:2]@Ls4_value1_%d_0[1:1]@Ls4_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value1_%d[3:0]   = Ls4_value1_%d_3[3:3]@Ls4_value1_%d_0[2:2]@Ls4_value1_%d_1[1:1]@Ls4_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Lp4_value2_%d[15:12] = Ls4_value2_%d_0[3:3]@Ls4_value2_%d_1[2:2]@Ls4_value2_%d_2[1:1]@Ls4_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value2_%d[11:8]  = Ls4_value2_%d_1[3:3]@Ls4_value2_%d_2[2:2]@Ls4_value2_%d_3[1:1]@Ls4_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value2_%d[7:4]   = Ls4_value2_%d_2[3:3]@Ls4_value2_%d_3[2:2]@Ls4_value2_%d_0[1:1]@Ls4_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Lp4_value2_%d[3:0]   = Ls4_value2_%d_3[3:3]@Ls4_value2_%d_0[2:2]@Ls4_value2_%d_1[1:1]@Ls4_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # ***********the 16-bit F-box in the right branch***************
+        buf += "ASSERT( x1_%d = BVXOR( Rs0_value1_%d_3@Rs0_value1_%d_2@Rs0_value1_%d_1@Rs0_value1_%d_0, Rs0_value2_%d_3@Rs0_value2_%d_2@Rs0_value2_%d_1@Rs0_value2_%d_0) ) ;\n" %(r, r,r,r,r, r,r,r,r)
+        buf += "ASSERT( Rp4_diff_%d= BVXOR( Rp4_value1_%d, Rp4_value2_%d) ) ;\n"  %(r,r,r)
+        # the S-box and P of F-box 
+        buf += "ASSERT( Rs1_value1_%d_3=Sbox[BVXOR(Rs0_value1_%d_3,0hex1)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs1_value2_%d_3=Sbox[BVXOR(Rs0_value2_%d_3,0hex1)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs1_value1_%d_2=Sbox[Rs0_value1_%d_2] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs1_value2_%d_2=Sbox[Rs0_value2_%d_2] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Rs1_value1_%d_1=Sbox[Rs0_value1_%d_1] ) ;\n" %(r, r)
+            buf += "ASSERT( Rs1_value2_%d_1=Sbox[Rs0_value2_%d_1] ) ;\n" %(r, r)
+            buf += "ASSERT( Rs1_value1_%d_0 = Sbox[BVXOR(Rs0_value1_%d_0,0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs1_value2_%d_0 = Sbox[BVXOR(Rs0_value2_%d_0,0hex%x)] ) ;\n" %(r,r,2*r+1)            
+        if r>=8: 
+            buf += "ASSERT( Rs1_value1_%d_1 = Sbox[BVXOR(Rs0_value1_%d_1,0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+            buf += "ASSERT( Rs1_value2_%d_1 = Sbox[BVXOR(Rs0_value2_%d_1,0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+            buf += "ASSERT( Rs1_value1_%d_0 = Sbox[BVXOR(Rs0_value1_%d_0,0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs1_value2_%d_0 = Sbox[BVXOR(Rs0_value2_%d_0,0hexf)] ) ;\n" %(r,r)            
+        # 16-bit permutation
+        buf += "ASSERT( Rp1_value1_%d[15:12] = Rs1_value1_%d_0[3:3]@Rs1_value1_%d_1[2:2]@Rs1_value1_%d_2[1:1]@Rs1_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value1_%d[11:8]  = Rs1_value1_%d_1[3:3]@Rs1_value1_%d_2[2:2]@Rs1_value1_%d_3[1:1]@Rs1_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value1_%d[7:4]   = Rs1_value1_%d_2[3:3]@Rs1_value1_%d_3[2:2]@Rs1_value1_%d_0[1:1]@Rs1_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value1_%d[3:0]   = Rs1_value1_%d_3[3:3]@Rs1_value1_%d_0[2:2]@Rs1_value1_%d_1[1:1]@Rs1_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Rp1_value2_%d[15:12] = Rs1_value2_%d_0[3:3]@Rs1_value2_%d_1[2:2]@Rs1_value2_%d_2[1:1]@Rs1_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value2_%d[11:8]  = Rs1_value2_%d_1[3:3]@Rs1_value2_%d_2[2:2]@Rs1_value2_%d_3[1:1]@Rs1_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value2_%d[7:4]   = Rs1_value2_%d_2[3:3]@Rs1_value2_%d_3[2:2]@Rs1_value2_%d_0[1:1]@Rs1_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp1_value2_%d[3:0]   = Rs1_value2_%d_3[3:3]@Rs1_value2_%d_0[2:2]@Rs1_value2_%d_1[1:1]@Rs1_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and P of F-box 
+        buf += "ASSERT( Rs2_value1_%d_3=Sbox[BVXOR(Rp1_value1_%d[15:12],0hex2)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs2_value2_%d_3=Sbox[BVXOR(Rp1_value2_%d[15:12],0hex2)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs2_value1_%d_2=Sbox[Rp1_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs2_value2_%d_2=Sbox[Rp1_value2_%d[11:8]] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Rs2_value1_%d_0 = Sbox[BVXOR(Rp1_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs2_value2_%d_0 = Sbox[BVXOR(Rp1_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs2_value1_%d_1=Sbox[Rp1_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Rs2_value2_%d_1=Sbox[Rp1_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:        
+            buf += "ASSERT( Rs2_value1_%d_0 = Sbox[BVXOR(Rp1_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs2_value2_%d_0 = Sbox[BVXOR(Rp1_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs2_value1_%d_1 = Sbox[BVXOR(Rp1_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+            buf += "ASSERT( Rs2_value2_%d_1 = Sbox[BVXOR(Rp1_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+        # 16-bit permutation 
+        buf += "ASSERT( Rp2_value1_%d[15:12] = Rs2_value1_%d_0[3:3]@Rs2_value1_%d_1[2:2]@Rs2_value1_%d_2[1:1]@Rs2_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value1_%d[11:8]  = Rs2_value1_%d_1[3:3]@Rs2_value1_%d_2[2:2]@Rs2_value1_%d_3[1:1]@Rs2_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value1_%d[7:4]   = Rs2_value1_%d_2[3:3]@Rs2_value1_%d_3[2:2]@Rs2_value1_%d_0[1:1]@Rs2_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value1_%d[3:0]   = Rs2_value1_%d_3[3:3]@Rs2_value1_%d_0[2:2]@Rs2_value1_%d_1[1:1]@Rs2_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Rp2_value2_%d[15:12] = Rs2_value2_%d_0[3:3]@Rs2_value2_%d_1[2:2]@Rs2_value2_%d_2[1:1]@Rs2_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value2_%d[11:8]  = Rs2_value2_%d_1[3:3]@Rs2_value2_%d_2[2:2]@Rs2_value2_%d_3[1:1]@Rs2_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value2_%d[7:4]   = Rs2_value2_%d_2[3:3]@Rs2_value2_%d_3[2:2]@Rs2_value2_%d_0[1:1]@Rs2_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp2_value2_%d[3:0]   = Rs2_value2_%d_3[3:3]@Rs2_value2_%d_0[2:2]@Rs2_value2_%d_1[1:1]@Rs2_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and P of F-box 
+        buf += "ASSERT( Rs3_value1_%d_3=Sbox[BVXOR(Rp2_value1_%d[15:12],0hex3)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs3_value2_%d_3=Sbox[BVXOR(Rp2_value2_%d[15:12],0hex3)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs3_value1_%d_2=Sbox[Rp2_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs3_value2_%d_2=Sbox[Rp2_value2_%d[11:8]] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Rs3_value1_%d_0 = Sbox[BVXOR(Rp2_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs3_value2_%d_0 = Sbox[BVXOR(Rp2_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs3_value1_%d_1=Sbox[Rp2_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Rs3_value2_%d_1=Sbox[Rp2_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:        
+            buf += "ASSERT( Rs3_value1_%d_0 = Sbox[BVXOR(Rp2_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs3_value2_%d_0 = Sbox[BVXOR(Rp2_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs3_value1_%d_1 = Sbox[BVXOR(Rp2_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+            buf += "ASSERT( Rs3_value2_%d_1 = Sbox[BVXOR(Rp2_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+        # 16-bit permutation
+        buf += "ASSERT( Rp3_value1_%d[15:12] = Rs3_value1_%d_0[3:3]@Rs3_value1_%d_1[2:2]@Rs3_value1_%d_2[1:1]@Rs3_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value1_%d[11:8]  = Rs3_value1_%d_1[3:3]@Rs3_value1_%d_2[2:2]@Rs3_value1_%d_3[1:1]@Rs3_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value1_%d[7:4]   = Rs3_value1_%d_2[3:3]@Rs3_value1_%d_3[2:2]@Rs3_value1_%d_0[1:1]@Rs3_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value1_%d[3:0]   = Rs3_value1_%d_3[3:3]@Rs3_value1_%d_0[2:2]@Rs3_value1_%d_1[1:1]@Rs3_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Rp3_value2_%d[15:12] = Rs3_value2_%d_0[3:3]@Rs3_value2_%d_1[2:2]@Rs3_value2_%d_2[1:1]@Rs3_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value2_%d[11:8]  = Rs3_value2_%d_1[3:3]@Rs3_value2_%d_2[2:2]@Rs3_value2_%d_3[1:1]@Rs3_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value2_%d[7:4]   = Rs3_value2_%d_2[3:3]@Rs3_value2_%d_3[2:2]@Rs3_value2_%d_0[1:1]@Rs3_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp3_value2_%d[3:0]   = Rs3_value2_%d_3[3:3]@Rs3_value2_%d_0[2:2]@Rs3_value2_%d_1[1:1]@Rs3_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+        # the S-box and P of F-box 
+        buf += "ASSERT( Rs4_value1_%d_3=Sbox[BVXOR(Rp3_value1_%d[15:12],0hex4)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs4_value2_%d_3=Sbox[BVXOR(Rp3_value2_%d[15:12],0hex4)] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs4_value1_%d_2=Sbox[Rp3_value1_%d[11:8]] ) ;\n" %(r, r)
+        buf += "ASSERT( Rs4_value2_%d_2=Sbox[Rp3_value2_%d[11:8]] ) ;\n" %(r, r)           
+        if r<8:
+            buf += "ASSERT( Rs4_value1_%d_0 = Sbox[BVXOR(Rp3_value1_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs4_value2_%d_0 = Sbox[BVXOR(Rp3_value2_%d[3:0],0hex%x)] ) ;\n" %(r,r,2*r+1)
+            buf += "ASSERT( Rs4_value1_%d_1=Sbox[Rp3_value1_%d[7:4]] ) ;\n" %(r, r)
+            buf += "ASSERT( Rs4_value2_%d_1=Sbox[Rp3_value2_%d[7:4]] ) ;\n" %(r, r)
+        if r>=8:        
+            buf += "ASSERT( Rs4_value1_%d_0 = Sbox[BVXOR(Rp3_value1_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs4_value2_%d_0 = Sbox[BVXOR(Rp3_value2_%d[3:0],0hexf)] ) ;\n" %(r,r)
+            buf += "ASSERT( Rs4_value1_%d_1 = Sbox[BVXOR(Rp3_value1_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+            buf += "ASSERT( Rs4_value2_%d_1 = Sbox[BVXOR(Rp3_value2_%d[7:4],0hex%x)] ) ;\n" %(r,r,2*r+1-15)
+        # 16-bit Permutation
+        buf += "ASSERT( Rp4_value1_%d[15:12] = Rs4_value1_%d_0[3:3]@Rs4_value1_%d_1[2:2]@Rs4_value1_%d_2[1:1]@Rs4_value1_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value1_%d[11:8]  = Rs4_value1_%d_1[3:3]@Rs4_value1_%d_2[2:2]@Rs4_value1_%d_3[1:1]@Rs4_value1_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value1_%d[7:4]   = Rs4_value1_%d_2[3:3]@Rs4_value1_%d_3[2:2]@Rs4_value1_%d_0[1:1]@Rs4_value1_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value1_%d[3:0]   = Rs4_value1_%d_3[3:3]@Rs4_value1_%d_0[2:2]@Rs4_value1_%d_1[1:1]@Rs4_value1_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        
+        buf += "ASSERT( Rp4_value2_%d[15:12] = Rs4_value2_%d_0[3:3]@Rs4_value2_%d_1[2:2]@Rs4_value2_%d_2[1:1]@Rs4_value2_%d_3[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value2_%d[11:8]  = Rs4_value2_%d_1[3:3]@Rs4_value2_%d_2[2:2]@Rs4_value2_%d_3[1:1]@Rs4_value2_%d_0[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value2_%d[7:4]   = Rs4_value2_%d_2[3:3]@Rs4_value2_%d_3[2:2]@Rs4_value2_%d_0[1:1]@Rs4_value2_%d_1[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "ASSERT( Rp4_value2_%d[3:0]   = Rs4_value2_%d_3[3:3]@Rs4_value2_%d_0[2:2]@Rs4_value2_%d_1[1:1]@Rs4_value2_%d_2[0:0] ) ;\n" %(r,r,r,r,r)
+        buf += "\n"
+    # Objective Function
+    buf += "ASSERT(total_Fflag=BVPLUS(12"
+    for r in range(Round):
+        buf += ", LFflag_%d, RFflag_%d" %(r,r)
+    buf += ") ) ;\n"
+    buf += "ASSERT( total_Fflag = 0hex00%x ) ;\n"  %(Bound)
+    buf += "ASSERT( NOT (x3_0@x2_0@x1_0@x0_0  =0hex%016x) ) ;\n" %(0)
+    buf += "QUERY(FALSE) ;\n"
+    buf += "COUNTEREXAMPLE ;\n"
+    fin.write(buf)
+    fin.close()
+    
+def GenerateCVCmodel(filename_model,Round,Bound):
+    DefineRoundVariables(filename_model,Round)
+    ConstraintByMiniF(filename_model,Round,Bound)
+
+if __name__=="__main__":
+    print("The Round is:")
+    Round=int(input())
+    print("The Bound is:")
+    Bound=int(input())
+    filename_model="U2_SKdiff_"+str(Round)+"_"+str(Bound)+".cvc"
+    fileobj=open(filename_model,"w+")
+    fileobj.close()
+    GenerateCVCmodel(filename_model,Round,Bound)
+    print("over")
